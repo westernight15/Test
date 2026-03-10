@@ -1,6 +1,21 @@
 <template>
   <div>
-    <PageHeader :icon="BookOpen" title="Bible" subtitle="Read and explore the Word of God" />
+    <div class="flex items-start justify-between mb-6">
+      <PageHeader :icon="BookOpen" title="Bible" subtitle="Read and explore the Word of God" />
+      <!-- Translation Selector -->
+      <div class="flex items-center gap-2">
+        <label class="text-xs text-text-muted font-medium">Version:</label>
+        <select
+          v-model="selectedTranslation"
+          @change="onTranslationChange"
+          class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gold bg-white"
+        >
+          <option v-for="t in translations" :key="t.id" :value="t.id">
+            {{ t.englishName }}
+          </option>
+        </select>
+      </div>
+    </div>
 
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Book List -->
@@ -57,11 +72,25 @@
             <h3 class="font-serif text-lg font-semibold text-text-dark mb-4">
               {{ selectedBook.commonName }} {{ selectedChapter }}
             </h3>
+            <p class="text-xs text-text-muted mb-4 flex items-center gap-1">
+              <Highlighter class="w-3 h-3" />
+              Click a verse to highlight it
+            </p>
             <div v-if="loadingVerses" class="text-text-muted text-sm italic">Loading...</div>
             <div v-else-if="verses.length" class="space-y-2">
-              <p v-for="verse in verses" :key="verse.number" class="text-text-dark leading-relaxed">
+              <p
+                v-for="verse in verses"
+                :key="verse.number"
+                @click="onVerseClick(verse)"
+                :class="[
+                  'leading-relaxed py-1 px-2 -mx-2 rounded-lg cursor-pointer transition-colors',
+                  isHighlighted(selectedBook!.id, selectedChapter!, verse.number)
+                    ? 'bg-yellow-100 hover:bg-yellow-200'
+                    : 'hover:bg-cream'
+                ]"
+              >
                 <sup class="text-gold font-bold text-xs mr-1">{{ verse.number }}</sup>
-                <span>{{ verse.text }}</span>
+                <span class="text-text-dark">{{ verse.text }}</span>
               </p>
             </div>
           </div>
@@ -79,7 +108,12 @@
 </template>
 
 <script setup lang="ts">
-import { BookOpen, ChevronRight } from 'lucide-vue-next'
+import { BookOpen, ChevronRight, Highlighter } from 'lucide-vue-next'
+
+interface Translation {
+  id: string
+  englishName: string
+}
 
 interface Book {
   id: string
@@ -94,18 +128,32 @@ interface Verse {
 }
 
 const search = ref('')
+const selectedTranslation = ref('BSB')
 const selectedBook = ref<Book | null>(null)
 const selectedChapter = ref<number | null>(null)
 const verses = ref<Verse[]>([])
 const loadingVerses = ref(false)
 
-const { data: books } = await useFetch<Book[]>('/api/bible/books')
+const { isHighlighted, toggleHighlight } = useHighlights()
+
+const { data: translations } = await useFetch<Translation[]>('/api/bible/translations')
+
+const { data: books, refresh: refreshBooks } = await useFetch<Book[]>('/api/bible/books', {
+  params: { translation: selectedTranslation }
+})
 
 const filteredBooks = computed(() =>
   (books.value || []).filter(b =>
     b.commonName.toLowerCase().includes(search.value.toLowerCase())
   )
 )
+
+async function onTranslationChange() {
+  selectedBook.value = null
+  selectedChapter.value = null
+  verses.value = []
+  await refreshBooks()
+}
 
 function selectBook(book: Book) {
   selectedBook.value = book
@@ -118,7 +166,11 @@ async function selectChapter(ch: number) {
   loadingVerses.value = true
   try {
     const data = await $fetch<Verse[]>('/api/bible/verses', {
-      params: { book: selectedBook.value!.id, chapter: ch }
+      params: {
+        book: selectedBook.value!.id,
+        chapter: ch,
+        translation: selectedTranslation.value
+      }
     })
     verses.value = data
   } catch {
@@ -126,5 +178,17 @@ async function selectChapter(ch: number) {
   } finally {
     loadingVerses.value = false
   }
+}
+
+function onVerseClick(verse: Verse) {
+  if (!selectedBook.value || !selectedChapter.value) return
+  toggleHighlight({
+    bookId: selectedBook.value.id,
+    bookName: selectedBook.value.commonName,
+    chapter: selectedChapter.value,
+    verseNumber: verse.number,
+    text: verse.text,
+    translation: selectedTranslation.value,
+  })
 }
 </script>
