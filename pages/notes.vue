@@ -74,7 +74,9 @@
 <script setup lang="ts">
 import { StickyNote, X } from 'lucide-vue-next'
 
-const { notes, removeNote, clearAllNotes } = useNotes()
+const { notes, removeNote, clearAllNotes, loadNotes } = useNotes()
+
+await loadNotes()
 
 const showClearConfirm = ref(false)
 

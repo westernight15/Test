@@ -10,24 +10,19 @@ export interface Highlight {
   createdAt: string
 }
 
-const STORAGE_KEY = 'faithguide-highlights'
-
 export function useHighlights() {
   const highlights = useState<Highlight[]>('highlights', () => [])
+  const _loaded = useState('highlights-loaded', () => false)
 
-  function loadHighlights() {
-    if (import.meta.client) {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        highlights.value = JSON.parse(stored)
-      }
+  async function loadHighlights() {
+    if (_loaded.value) return
+    try {
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      highlights.value = await $fetch<Highlight[]>('/api/user/highlights', { headers })
+    } catch {
+      highlights.value = []
     }
-  }
-
-  function saveHighlights() {
-    if (import.meta.client) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(highlights.value))
-    }
+    _loaded.value = true
   }
 
   function isHighlighted(bookId: string, chapter: number, verseNumber: number): Highlight | undefined {
@@ -36,7 +31,7 @@ export function useHighlights() {
     )
   }
 
-  function toggleHighlight(params: {
+  async function toggleHighlight(params: {
     bookId: string
     bookName: string
     chapter: number
@@ -48,34 +43,29 @@ export function useHighlights() {
     const existing = isHighlighted(params.bookId, params.chapter, params.verseNumber)
     if (existing) {
       highlights.value = highlights.value.filter(h => h.id !== existing.id)
+      await $fetch(`/api/user/highlights/${existing.id}`, { method: 'DELETE' }).catch(() => {})
     } else {
-      highlights.value.push({
-        id: `${params.bookId}-${params.chapter}-${params.verseNumber}-${Date.now()}`,
-        bookId: params.bookId,
-        bookName: params.bookName,
-        chapter: params.chapter,
-        verseNumber: params.verseNumber,
-        text: params.text,
-        translation: params.translation,
-        color: params.color || 'gold',
-        createdAt: new Date().toISOString(),
-      })
+      try {
+        const newHighlight = await $fetch<Highlight>('/api/user/highlights', {
+          method: 'POST',
+          body: params,
+        })
+        highlights.value.push(newHighlight)
+      } catch {
+        // Revert optimistic update not needed since we add after success
+      }
     }
-    saveHighlights()
   }
 
-  function removeHighlight(id: string) {
+  async function removeHighlight(id: string) {
     highlights.value = highlights.value.filter(h => h.id !== id)
-    saveHighlights()
+    await $fetch(`/api/user/highlights/${id}`, { method: 'DELETE' }).catch(() => {})
   }
 
-  function clearAllHighlights() {
+  async function clearAllHighlights() {
     highlights.value = []
-    saveHighlights()
+    await $fetch('/api/user/highlights', { method: 'DELETE' }).catch(() => {})
   }
-
-  // Load on init
-  loadHighlights()
 
   return {
     highlights: readonly(highlights),

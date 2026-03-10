@@ -11,24 +11,19 @@ export interface Note {
   updatedAt: string
 }
 
-const STORAGE_KEY = 'faithguide-notes'
-
 export function useNotes() {
   const notes = useState<Note[]>('notes', () => [])
+  const _loaded = useState('notes-loaded', () => false)
 
-  function loadNotes() {
-    if (import.meta.client) {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        notes.value = JSON.parse(stored)
-      }
+  async function loadNotes() {
+    if (_loaded.value) return
+    try {
+      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      notes.value = await $fetch<Note[]>('/api/user/notes', { headers })
+    } catch {
+      notes.value = []
     }
-  }
-
-  function saveNotes() {
-    if (import.meta.client) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(notes.value))
-    }
+    _loaded.value = true
   }
 
   function getNote(bookId: string, chapter: number, verseNumber: number): Note | undefined {
@@ -41,7 +36,7 @@ export function useNotes() {
     return !!getNote(bookId, chapter, verseNumber)
   }
 
-  function saveNote(params: {
+  async function saveNote(params: {
     bookId: string
     bookName: string
     chapter: number
@@ -50,39 +45,33 @@ export function useNotes() {
     translation: string
     content: string
   }) {
-    const existing = getNote(params.bookId, params.chapter, params.verseNumber)
-    if (existing) {
-      existing.content = params.content
-      existing.updatedAt = new Date().toISOString()
-    } else {
-      notes.value.push({
-        id: `${params.bookId}-${params.chapter}-${params.verseNumber}-${Date.now()}`,
-        bookId: params.bookId,
-        bookName: params.bookName,
-        chapter: params.chapter,
-        verseNumber: params.verseNumber,
-        verseText: params.verseText,
-        translation: params.translation,
-        content: params.content,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+    try {
+      const saved = await $fetch<Note>('/api/user/notes', {
+        method: 'POST',
+        body: params,
       })
+      const existingIdx = notes.value.findIndex(
+        n => n.bookId === params.bookId && n.chapter === params.chapter && n.verseNumber === params.verseNumber
+      )
+      if (existingIdx >= 0) {
+        notes.value[existingIdx] = saved
+      } else {
+        notes.value.push(saved)
+      }
+    } catch {
+      // Failed to save
     }
-    saveNotes()
   }
 
-  function removeNote(id: string) {
+  async function removeNote(id: string) {
     notes.value = notes.value.filter(n => n.id !== id)
-    saveNotes()
+    await $fetch(`/api/user/notes/${id}`, { method: 'DELETE' }).catch(() => {})
   }
 
-  function clearAllNotes() {
+  async function clearAllNotes() {
     notes.value = []
-    saveNotes()
+    await $fetch('/api/user/notes', { method: 'DELETE' }).catch(() => {})
   }
-
-  // Load on init
-  loadNotes()
 
   return {
     notes: readonly(notes),

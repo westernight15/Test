@@ -37,9 +37,20 @@
       </NuxtLink>
     </nav>
 
-    <!-- Footer -->
-    <div class="px-6 py-4 border-t border-white/10">
-      <p class="text-xs text-gray-500">Growing in Faith</p>
+    <!-- User section -->
+    <div class="px-4 py-4 border-t border-white/10">
+      <div v-if="user" class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-gold/20 rounded-full flex items-center justify-center text-gold font-semibold text-sm">
+          {{ user.displayName.charAt(0).toUpperCase() }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-white truncate">{{ user.displayName }}</p>
+        </div>
+        <button @click="handleLogout" class="p-1.5 text-gray-400 hover:text-white transition-colors" title="Sign out">
+          <LogOut class="w-4 h-4" />
+        </button>
+      </div>
+      <p class="text-xs text-gray-500 mt-3">Growing in Faith</p>
     </div>
   </aside>
 </template>
@@ -53,7 +64,8 @@ import {
   Sun,
   MessageCircle,
   Highlighter,
-  StickyNote
+  StickyNote,
+  LogOut
 } from 'lucide-vue-next'
 
 defineProps<{
@@ -63,6 +75,7 @@ defineProps<{
 defineEmits(['navigate'])
 
 const route = useRoute()
+const { user, logout } = useAuth()
 
 const navItems = [
   { to: '/', label: 'My Dashboard', icon: LayoutDashboard },
@@ -78,5 +91,9 @@ const navItems = [
 function isActive(path: string) {
   if (path === '/') return route.path === '/'
   return route.path.startsWith(path)
+}
+
+async function handleLogout() {
+  await logout()
 }
 </script>

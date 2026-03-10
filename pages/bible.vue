@@ -103,7 +103,6 @@
                 <!-- Action popup -->
                 <div
                   v-if="activeVerse?.number === verse.number"
-                  ref="popupRef"
                   class="absolute z-20 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px]"
                   :style="{ left: popupX + 'px' }"
                 >
@@ -233,8 +232,11 @@ const showNoteModal = ref(false)
 const noteVerse = ref<Verse | null>(null)
 const noteContent = ref('')
 
-const { isHighlighted, toggleHighlight } = useHighlights()
-const { hasNote, getNote, saveNote, removeNote } = useNotes()
+const { isHighlighted, toggleHighlight, loadHighlights } = useHighlights()
+const { hasNote, getNote, saveNote, removeNote, loadNotes } = useNotes()
+
+await loadHighlights()
+await loadNotes()
 
 const { data: translations } = await useFetch<Translation[]>('/api/bible/translations')
 
@@ -273,6 +275,17 @@ async function selectChapter(ch: number) {
       }
     })
     verses.value = data
+
+    // Save reading progress
+    $fetch('/api/user/reading-progress', {
+      method: 'POST',
+      body: {
+        bookId: selectedBook.value!.id,
+        bookName: selectedBook.value!.commonName,
+        chapter: ch,
+        translation: selectedTranslation.value,
+      }
+    }).catch(() => {})
   } catch {
     verses.value = []
   } finally {
@@ -285,7 +298,6 @@ function onVerseClick(event: MouseEvent, verse: Verse) {
     activeVerse.value = null
     return
   }
-  // Position popup near click
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   const clickX = event.clientX - rect.left

@@ -73,7 +73,9 @@
 <script setup lang="ts">
 import { Highlighter, X } from 'lucide-vue-next'
 
-const { highlights, removeHighlight, clearAllHighlights } = useHighlights()
+const { highlights, removeHighlight, clearAllHighlights, loadHighlights } = useHighlights()
+
+await loadHighlights()
 
 const showClearConfirm = ref(false)
 
