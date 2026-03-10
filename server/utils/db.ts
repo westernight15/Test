@@ -1,14 +1,12 @@
-import Database from 'better-sqlite3'
-import { resolve } from 'path'
+import type { H3Event } from 'h3'
 
-const dbPath = resolve(process.cwd(), 'bible.db')
-
-let db: Database.Database | null = null
-
-export function useDb(): Database.Database {
-  if (!db) {
-    db = new Database(dbPath, { readonly: true })
-    db.pragma('journal_mode = WAL')
+export function useDb(event: H3Event) {
+  const { cloudflare } = event.context
+  if (!cloudflare?.env?.DB) {
+    throw createError({
+      statusCode: 500,
+      message: 'D1 database binding not available',
+    })
   }
-  return db
+  return cloudflare.env.DB
 }

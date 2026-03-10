@@ -25,3 +25,7 @@ logs
 
 # Database
 *.db
+scripts/d1-seed/
+
+# Wrangler
+.wrangler

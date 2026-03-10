@@ -1,16 +1,16 @@
 import { useDb } from '~/server/utils/db'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const translationId = (query.translation as string) || 'BSB'
 
-  const db = useDb()
-  const books = db.prepare(`
+  const db = useDb(event)
+  const { results } = await db.prepare(`
     SELECT id, commonName, numberOfChapters, "order"
     FROM Book
     WHERE translationId = ?
     ORDER BY "order"
-  `).all(translationId)
+  `).bind(translationId).all()
 
-  return books
+  return results
 })

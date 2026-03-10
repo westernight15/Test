@@ -1,6 +1,6 @@
 import { useDb } from '~/server/utils/db'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const bookId = query.book as string
   const chapter = Number(query.chapter)
@@ -10,15 +10,15 @@ export default defineEventHandler((event) => {
     throw createError({ statusCode: 400, message: 'book and chapter are required' })
   }
 
-  const db = useDb()
-  const verses = db.prepare(`
+  const db = useDb(event)
+  const { results } = await db.prepare(`
     SELECT number, text
     FROM ChapterVerse
     WHERE translationId = ?
       AND bookId = ?
       AND chapterNumber = ?
     ORDER BY number
-  `).all(translationId, bookId, chapter)
+  `).bind(translationId, bookId, chapter).all()
 
-  return verses
+  return results
 })

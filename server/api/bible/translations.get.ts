@@ -1,8 +1,8 @@
 import { useDb } from '~/server/utils/db'
 
-export default defineEventHandler(() => {
-  const db = useDb()
-  const translations = db.prepare(`
+export default defineEventHandler(async (event) => {
+  const db = useDb(event)
+  const { results } = await db.prepare(`
     SELECT id, englishName
     FROM Translation
     WHERE language = 'eng'
@@ -21,5 +21,5 @@ export default defineEventHandler(() => {
       englishName
   `).all()
 
-  return translations
+  return results
 })
