@@ -63,7 +63,7 @@ defineEmits(['navigate'])
 const route = useRoute()
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'My Dashboard', icon: LayoutDashboard },
   { to: '/bible', label: 'Bible', icon: BookOpen },
   { to: '/study-plans', label: 'Study Plans', icon: ClipboardList },
   { to: '/daily-walk', label: 'Daily Walk', icon: Clock },
