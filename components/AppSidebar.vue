@@ -52,7 +52,8 @@ import {
   Clock,
   Sun,
   MessageCircle,
-  Highlighter
+  Highlighter,
+  StickyNote
 } from 'lucide-vue-next'
 
 defineProps<{
@@ -67,6 +68,7 @@ const navItems = [
   { to: '/', label: 'My Dashboard', icon: LayoutDashboard },
   { to: '/bible', label: 'Bible', icon: BookOpen },
   { to: '/highlights', label: 'Highlights', icon: Highlighter },
+  { to: '/notes', label: 'Notes', icon: StickyNote },
   { to: '/study-plans', label: 'Study Plans', icon: ClipboardList },
   { to: '/daily-walk', label: 'Daily Walk', icon: Clock },
   { to: '/daily-devotion', label: 'Daily Devotion', icon: Sun },

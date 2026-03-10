@@ -74,24 +74,55 @@
             </h3>
             <p class="text-xs text-text-muted mb-4 flex items-center gap-1">
               <Highlighter class="w-3 h-3" />
-              Click a verse to highlight it
+              Click a verse to highlight or add a note
             </p>
             <div v-if="loadingVerses" class="text-text-muted text-sm italic">Loading...</div>
             <div v-else-if="verses.length" class="space-y-2">
-              <p
+              <div
                 v-for="verse in verses"
                 :key="verse.number"
-                @click="onVerseClick(verse)"
-                :class="[
-                  'leading-relaxed py-1 px-2 -mx-2 rounded-lg cursor-pointer transition-colors',
-                  isHighlighted(selectedBook!.id, selectedChapter!, verse.number)
-                    ? 'bg-yellow-100 hover:bg-yellow-200'
-                    : 'hover:bg-cream'
-                ]"
+                class="relative"
               >
-                <sup class="text-gold font-bold text-xs mr-1">{{ verse.number }}</sup>
-                <span class="text-text-dark">{{ verse.text }}</span>
-              </p>
+                <p
+                  @click="onVerseClick($event, verse)"
+                  :class="[
+                    'leading-relaxed py-1 px-2 -mx-2 rounded-lg cursor-pointer transition-colors',
+                    isHighlighted(selectedBook!.id, selectedChapter!, verse.number)
+                      ? 'bg-yellow-100 hover:bg-yellow-200'
+                      : 'hover:bg-cream'
+                  ]"
+                >
+                  <sup class="text-gold font-bold text-xs mr-1">{{ verse.number }}</sup>
+                  <span class="text-text-dark">{{ verse.text }}</span>
+                  <StickyNote
+                    v-if="hasNote(selectedBook!.id, selectedChapter!, verse.number)"
+                    class="w-3.5 h-3.5 text-gold inline-block ml-1 align-text-top"
+                  />
+                </p>
+
+                <!-- Action popup -->
+                <div
+                  v-if="activeVerse?.number === verse.number"
+                  ref="popupRef"
+                  class="absolute z-20 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px]"
+                  :style="{ left: popupX + 'px' }"
+                >
+                  <button
+                    @click="handleHighlight(verse)"
+                    class="w-full text-left px-4 py-2 text-sm hover:bg-cream transition-colors flex items-center gap-2"
+                  >
+                    <Highlighter class="w-4 h-4 text-yellow-500" />
+                    <span>{{ isHighlighted(selectedBook!.id, selectedChapter!, verse.number) ? 'Remove Highlight' : 'Highlight' }}</span>
+                  </button>
+                  <button
+                    @click="handleNote(verse)"
+                    class="w-full text-left px-4 py-2 text-sm hover:bg-cream transition-colors flex items-center gap-2"
+                  >
+                    <StickyNote class="w-4 h-4 text-gold" />
+                    <span>{{ hasNote(selectedBook!.id, selectedChapter!, verse.number) ? 'Edit Note' : 'Add Note' }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -104,11 +135,70 @@
         </template>
       </div>
     </div>
+
+    <!-- Note Modal -->
+    <div v-if="showNoteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="closeNoteModal">
+      <div class="absolute inset-0 bg-black/40" @click="closeNoteModal"></div>
+      <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 class="font-serif text-lg font-semibold text-text-dark">
+              {{ noteVerse ? (hasNote(selectedBook!.id, selectedChapter!, noteVerse.number) ? 'Edit Note' : 'Add Note') : 'Note' }}
+            </h3>
+            <p class="text-xs text-text-muted mt-0.5">
+              {{ selectedBook?.commonName }} {{ selectedChapter }}:{{ noteVerse?.number }}
+            </p>
+          </div>
+          <button @click="closeNoteModal" class="p-1 text-text-muted hover:text-text-dark transition-colors">
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+        <div class="px-6 py-4">
+          <p class="text-sm text-text-muted italic mb-4">"{{ noteVerse?.text }}"</p>
+          <textarea
+            v-model="noteContent"
+            placeholder="Write your notes here..."
+            rows="6"
+            class="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gold resize-none"
+          ></textarea>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <button
+            v-if="noteVerse && hasNote(selectedBook!.id, selectedChapter!, noteVerse.number)"
+            @click="deleteNote"
+            class="text-sm text-red-500 hover:text-red-700 transition-colors"
+          >
+            Delete Note
+          </button>
+          <div v-else></div>
+          <div class="flex gap-2">
+            <button
+              @click="closeNoteModal"
+              class="px-4 py-2 text-sm rounded-lg border border-gray-300 text-text-muted hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              @click="saveNoteHandler"
+              :disabled="!noteContent.trim()"
+              :class="[
+                'px-4 py-2 text-sm rounded-lg font-semibold transition-colors',
+                noteContent.trim()
+                  ? 'bg-gold hover:bg-gold-dark text-white'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ]"
+            >
+              Save Note
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BookOpen, ChevronRight, Highlighter } from 'lucide-vue-next'
+import { BookOpen, ChevronRight, Highlighter, StickyNote, X } from 'lucide-vue-next'
 
 interface Translation {
   id: string
@@ -134,7 +224,17 @@ const selectedChapter = ref<number | null>(null)
 const verses = ref<Verse[]>([])
 const loadingVerses = ref(false)
 
+// Verse action popup state
+const activeVerse = ref<Verse | null>(null)
+const popupX = ref(0)
+
+// Note modal state
+const showNoteModal = ref(false)
+const noteVerse = ref<Verse | null>(null)
+const noteContent = ref('')
+
 const { isHighlighted, toggleHighlight } = useHighlights()
+const { hasNote, getNote, saveNote, removeNote } = useNotes()
 
 const { data: translations } = await useFetch<Translation[]>('/api/bible/translations')
 
@@ -180,7 +280,20 @@ async function selectChapter(ch: number) {
   }
 }
 
-function onVerseClick(verse: Verse) {
+function onVerseClick(event: MouseEvent, verse: Verse) {
+  if (activeVerse.value?.number === verse.number) {
+    activeVerse.value = null
+    return
+  }
+  // Position popup near click
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const clickX = event.clientX - rect.left
+  popupX.value = Math.max(0, Math.min(clickX - 80, rect.width - 180))
+  activeVerse.value = verse
+}
+
+function handleHighlight(verse: Verse) {
   if (!selectedBook.value || !selectedChapter.value) return
   toggleHighlight({
     bookId: selectedBook.value.id,
@@ -190,5 +303,61 @@ function onVerseClick(verse: Verse) {
     text: verse.text,
     translation: selectedTranslation.value,
   })
+  activeVerse.value = null
 }
+
+function handleNote(verse: Verse) {
+  if (!selectedBook.value || !selectedChapter.value) return
+  noteVerse.value = verse
+  const existing = getNote(selectedBook.value.id, selectedChapter.value, verse.number)
+  noteContent.value = existing?.content || ''
+  showNoteModal.value = true
+  activeVerse.value = null
+}
+
+function saveNoteHandler() {
+  if (!selectedBook.value || !selectedChapter.value || !noteVerse.value || !noteContent.value.trim()) return
+  saveNote({
+    bookId: selectedBook.value.id,
+    bookName: selectedBook.value.commonName,
+    chapter: selectedChapter.value,
+    verseNumber: noteVerse.value.number,
+    verseText: noteVerse.value.text,
+    translation: selectedTranslation.value,
+    content: noteContent.value.trim(),
+  })
+  closeNoteModal()
+}
+
+function deleteNote() {
+  if (!selectedBook.value || !selectedChapter.value || !noteVerse.value) return
+  const existing = getNote(selectedBook.value.id, selectedChapter.value, noteVerse.value.number)
+  if (existing) {
+    removeNote(existing.id)
+  }
+  closeNoteModal()
+}
+
+function closeNoteModal() {
+  showNoteModal.value = false
+  noteVerse.value = null
+  noteContent.value = ''
+}
+
+// Close popup when clicking outside
+function onDocumentClick(e: MouseEvent) {
+  if (!activeVerse.value) return
+  const target = e.target as HTMLElement
+  if (!target.closest('.relative')) {
+    activeVerse.value = null
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
 </script>
