@@ -16,16 +16,16 @@
         <div class="max-h-[60vh] overflow-y-auto">
           <button
             v-for="book in filteredBooks"
-            :key="book"
-            @click="selectedBook = book"
+            :key="book.id"
+            @click="selectBook(book)"
             :class="[
               'w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors border-b border-gray-50',
-              selectedBook === book
+              selectedBook?.id === book.id
                 ? 'bg-gold/10 text-gold font-semibold'
                 : 'text-text-dark hover:bg-gray-50'
             ]"
           >
-            <span>{{ book }}</span>
+            <span>{{ book.commonName }}</span>
             <ChevronRight class="w-4 h-4 opacity-40" />
           </button>
         </div>
@@ -34,13 +34,13 @@
       <!-- Content Area -->
       <div class="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[60vh]">
         <template v-if="selectedBook">
-          <h2 class="font-serif text-2xl font-bold text-text-dark mb-2">{{ selectedBook }}</h2>
+          <h2 class="font-serif text-2xl font-bold text-text-dark mb-2">{{ selectedBook.commonName }}</h2>
           <p class="text-text-muted text-sm mb-6">Select a chapter to begin reading</p>
           <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
             <button
-              v-for="ch in getChapterCount(selectedBook)"
+              v-for="ch in selectedBook.numberOfChapters"
               :key="ch"
-              @click="selectedChapter = ch"
+              @click="selectChapter(ch)"
               :class="[
                 'w-10 h-10 rounded-lg text-sm font-medium transition-colors',
                 selectedChapter === ch
@@ -51,12 +51,19 @@
               {{ ch }}
             </button>
           </div>
+
+          <!-- Verses -->
           <div v-if="selectedChapter" class="mt-8 border-t border-gray-100 pt-6">
-            <h3 class="font-serif text-lg font-semibold text-text-dark mb-4">{{ selectedBook }} {{ selectedChapter }}</h3>
-            <p class="text-text-dark leading-relaxed font-serif italic text-gray-600">
-              Scripture content for {{ selectedBook }} chapter {{ selectedChapter }} would be loaded here.
-              This is a placeholder for the actual Bible text that would come from an API or local database.
-            </p>
+            <h3 class="font-serif text-lg font-semibold text-text-dark mb-4">
+              {{ selectedBook.commonName }} {{ selectedChapter }}
+            </h3>
+            <div v-if="loadingVerses" class="text-text-muted text-sm italic">Loading...</div>
+            <div v-else-if="verses.length" class="space-y-2">
+              <p v-for="verse in verses" :key="verse.number" class="text-text-dark leading-relaxed">
+                <sup class="text-gold font-bold text-xs mr-1">{{ verse.number }}</sup>
+                <span>{{ verse.text }}</span>
+              </p>
+            </div>
           </div>
         </template>
         <template v-else>
@@ -74,53 +81,50 @@
 <script setup lang="ts">
 import { BookOpen, ChevronRight } from 'lucide-vue-next'
 
-const search = ref('')
-const selectedBook = ref<string | null>(null)
-const selectedChapter = ref<number | null>(null)
-
-watch(selectedBook, () => {
-  selectedChapter.value = null
-})
-
-const books = [
-  'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy',
-  'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel',
-  '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra',
-  'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs',
-  'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations',
-  'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos',
-  'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk',
-  'Zephaniah', 'Haggai', 'Zechariah', 'Malachi',
-  'Matthew', 'Mark', 'Luke', 'John', 'Acts',
-  'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians',
-  'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy',
-  '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
-  '1 Peter', '2 Peter', '1 John', '2 John', '3 John',
-  'Jude', 'Revelation'
-]
-
-const chapterCounts: Record<string, number> = {
-  Genesis: 50, Exodus: 40, Leviticus: 27, Numbers: 36, Deuteronomy: 34,
-  Joshua: 24, Judges: 21, Ruth: 4, '1 Samuel': 31, '2 Samuel': 24,
-  '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36, Ezra: 10,
-  Nehemiah: 13, Esther: 10, Job: 42, Psalms: 150, Proverbs: 31,
-  Ecclesiastes: 12, 'Song of Solomon': 8, Isaiah: 66, Jeremiah: 52, Lamentations: 5,
-  Ezekiel: 48, Daniel: 12, Hosea: 14, Joel: 3, Amos: 9,
-  Obadiah: 1, Jonah: 4, Micah: 7, Nahum: 3, Habakkuk: 3,
-  Zephaniah: 3, Haggai: 2, Zechariah: 14, Malachi: 4,
-  Matthew: 28, Mark: 16, Luke: 24, John: 21, Acts: 28,
-  Romans: 16, '1 Corinthians': 16, '2 Corinthians': 13, Galatians: 6, Ephesians: 6,
-  Philippians: 4, Colossians: 4, '1 Thessalonians': 5, '2 Thessalonians': 3, '1 Timothy': 6,
-  '2 Timothy': 4, Titus: 3, Philemon: 1, Hebrews: 13, James: 5,
-  '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1, '3 John': 1,
-  Jude: 1, Revelation: 22
+interface Book {
+  id: string
+  commonName: string
+  numberOfChapters: number
+  order: number
 }
 
+interface Verse {
+  number: number
+  text: string
+}
+
+const search = ref('')
+const selectedBook = ref<Book | null>(null)
+const selectedChapter = ref<number | null>(null)
+const verses = ref<Verse[]>([])
+const loadingVerses = ref(false)
+
+const { data: books } = await useFetch<Book[]>('/api/bible/books')
+
 const filteredBooks = computed(() =>
-  books.filter(b => b.toLowerCase().includes(search.value.toLowerCase()))
+  (books.value || []).filter(b =>
+    b.commonName.toLowerCase().includes(search.value.toLowerCase())
+  )
 )
 
-function getChapterCount(book: string): number {
-  return chapterCounts[book] || 10
+function selectBook(book: Book) {
+  selectedBook.value = book
+  selectedChapter.value = null
+  verses.value = []
+}
+
+async function selectChapter(ch: number) {
+  selectedChapter.value = ch
+  loadingVerses.value = true
+  try {
+    const data = await $fetch<Verse[]>('/api/bible/verses', {
+      params: { book: selectedBook.value!.id, chapter: ch }
+    })
+    verses.value = data
+  } catch {
+    verses.value = []
+  } finally {
+    loadingVerses.value = false
+  }
 }
 </script>
