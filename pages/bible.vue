@@ -262,6 +262,8 @@ const showNoteModal = ref(false)
 const noteVerse = ref<Verse | null>(null)
 const noteContent = ref('')
 
+const route = useRoute()
+
 const { isHighlighted, toggleHighlight, loadHighlights } = useHighlights()
 const { hasNote, getNote, saveNote, removeNote, loadNotes } = useNotes()
 
@@ -273,6 +275,25 @@ const { data: translations } = await useFetch<Translation[]>('/api/bible/transla
 const { data: books, refresh: refreshBooks } = await useFetch<Book[]>('/api/bible/books', {
   params: { translation: selectedTranslation }
 })
+
+// Deep-link support: ?book=MAT&chapter=5
+function applyQueryParams() {
+  const qBook = route.query.book as string | undefined
+  const qChapter = route.query.chapter as string | undefined
+  if (qBook && books.value) {
+    const found = books.value.find(b => b.id === qBook)
+    if (found) {
+      selectedBook.value = found
+      if (qChapter) {
+        const ch = parseInt(qChapter, 10)
+        if (ch >= 1 && ch <= found.numberOfChapters) {
+          selectChapter(ch)
+        }
+      }
+    }
+  }
+}
+applyQueryParams()
 
 const filteredBooks = computed(() =>
   (books.value || []).filter(b =>

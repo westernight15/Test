@@ -29,36 +29,121 @@
       <!-- Scripture Tab -->
       <template v-if="activeTab === 'scripture'">
         <p class="text-xs font-semibold tracking-widest text-gold uppercase mb-2">Today's Scripture</p>
-        <h3 class="font-serif text-xl font-bold text-text-dark mb-1">Philippians 4:6-7</h3>
-        <p class="font-serif italic text-text-dark leading-relaxed text-lg mt-4 mb-6 border-l-4 border-gold pl-4">
-          "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving,
-          present your requests to God. And the peace of God, which transcends all understanding,
-          will guard your hearts and your minds in Christ Jesus."
-        </p>
-        <div class="bg-cream rounded-lg p-4">
+        <h3 class="font-serif text-xl font-bold text-text-dark mb-1">A Spirit-Driven Walk</h3>
+        <p class="text-sm text-text-muted mb-6">Readings from Matthew, Jude, and Romans</p>
+
+        <div class="space-y-6">
+          <div>
+            <p class="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">The Promise of the Spirit</p>
+            <blockquote class="border-l-4 border-gold bg-cream rounded-r-lg p-4">
+              <p class="font-serif italic text-text-dark leading-relaxed">
+                "If you then, who are evil, know how to give good gifts to your children, how much more will your Father in heaven give the Holy Spirit to those who ask Him!"
+              </p>
+              <NuxtLink to="/bible?book=MAT&chapter=7" class="text-sm font-semibold text-gold mt-2 inline-block hover:underline">
+                — Matthew 7:11 (BSB)
+              </NuxtLink>
+            </blockquote>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">The Spirit Intercedes for Us</p>
+            <blockquote class="border-l-4 border-gold bg-cream rounded-r-lg p-4">
+              <p class="font-serif italic text-text-dark leading-relaxed">
+                "In the same way, the Spirit helps us in our weakness. For we do not know what to pray for as we should, but the Spirit Himself intercedes for us with groans too deep for words."
+              </p>
+              <NuxtLink to="/bible?book=ROM&chapter=8" class="text-sm font-semibold text-gold mt-2 inline-block hover:underline">
+                — Romans 8:26 (BSB)
+              </NuxtLink>
+            </blockquote>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Praying in the Spirit</p>
+            <blockquote class="border-l-4 border-gold bg-cream rounded-r-lg p-4">
+              <p class="font-serif italic text-text-dark leading-relaxed">
+                "But you, beloved, building yourselves up in your most holy faith and praying in the Holy Spirit, keep yourselves in the love of God, waiting expectantly for the mercy of our Lord Jesus Christ to bring you eternal life."
+              </p>
+              <NuxtLink to="/bible?book=JUD&chapter=1" class="text-sm font-semibold text-gold mt-2 inline-block hover:underline">
+                — Jude 1:20-21 (BSB)
+              </NuxtLink>
+            </blockquote>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">The Spirit Bears Witness</p>
+            <blockquote class="border-l-4 border-gold bg-cream rounded-r-lg p-4">
+              <p class="font-serif italic text-text-dark leading-relaxed">
+                "For you did not receive a spirit of slavery that returns you to fear, but you received the Spirit of sonship, by whom we cry, 'Abba! Father!' The Spirit Himself testifies with our spirit that we are God's children."
+              </p>
+              <NuxtLink to="/bible?book=ROM&chapter=8" class="text-sm font-semibold text-gold mt-2 inline-block hover:underline">
+                — Romans 8:15-16 (BSB)
+              </NuxtLink>
+            </blockquote>
+          </div>
+        </div>
+
+        <div class="bg-cream rounded-lg p-4 mt-6">
           <p class="text-sm font-semibold text-text-dark mb-2">Reflection Prompt</p>
-          <p class="text-sm text-text-muted">What situations in your life right now are causing you anxiety? How can you bring those to God in prayer today?</p>
+          <p class="text-sm text-text-muted">When was the last time you felt stuck in prayer — unsure of what to say or how to ask? How does it change your perspective to know that the Holy Spirit is already praying on your behalf, even in those moments of silence?</p>
         </div>
       </template>
 
       <!-- Devotion Tab -->
       <template v-else-if="activeTab === 'devotion'">
         <p class="text-xs font-semibold tracking-widest text-gold uppercase mb-2">Devotion Walkthrough</p>
-        <h3 class="font-serif text-xl font-bold text-text-dark mb-4">The Peace That Passes Understanding</h3>
-        <div class="space-y-4 text-text-dark leading-relaxed">
+        <h3 class="font-serif text-xl font-bold text-text-dark mb-6">Walking in Step with the Spirit</h3>
+        <div class="space-y-5 text-text-dark leading-relaxed">
           <p>
-            In a world filled with uncertainty, Paul's words to the Philippians ring with remarkable relevance.
-            Writing from a Roman prison, Paul didn't just theorize about peace — he lived it.
+            Most of us have been taught how to pray to the Father and how to follow Jesus — but when it comes to the Holy Spirit, many believers feel uncertain. Who is the Spirit? How do we relate to Him? Can we actually pray <em>to</em> the Spirit, or only <em>through</em> Him?
           </p>
           <p>
-            The peace Paul describes isn't the absence of problems. It's a supernatural calm that comes from
-            entrusting our worries to a God who is sovereign over all things. This peace "transcends all understanding"
-            because it doesn't depend on circumstances making sense.
+            The truth is that the Holy Spirit is not an impersonal force or a vague energy. He is the third Person of the Trinity — fully God, fully personal, and deeply involved in your daily life. Jesus Himself described the Spirit as the "Helper" or "Advocate" who would be <em>with</em> His people and <em>in</em> them
+            (<NuxtLink to="/bible?book=MAT&chapter=10" class="text-gold font-semibold hover:underline">Matthew 10:20</NuxtLink>).
+            When Jesus told His disciples not to worry about what to say when brought before rulers, He said, <em>"For it will not be you speaking, but the Spirit of your Father speaking through you."</em> The Spirit is not distant — He speaks, He guides, He moves.
+          </p>
+
+          <h4 class="font-serif text-lg font-semibold text-text-dark pt-2">The Spirit Helps Our Weakness</h4>
+          <p>
+            One of the most comforting truths in all of Scripture is found in
+            <NuxtLink to="/bible?book=ROM&chapter=8" class="text-gold font-semibold hover:underline">Romans 8:26-27</NuxtLink>.
+            Paul writes that the Spirit "helps us in our weakness" — and the specific weakness he's talking about is <em>prayer</em>. There are moments in the life of every believer when you simply don't know what to pray. The grief is too deep, the confusion too thick, the situation too complex. In those moments, Paul says, the Spirit Himself steps in.
           </p>
           <p>
-            Notice Paul's prescription: prayer and petition, <em>with thanksgiving</em>. Gratitude shifts our focus
-            from what we lack to what God has already provided. It's the antidote to anxiety because it reminds us
-            of God's faithfulness.
+            The phrase Paul uses is extraordinary: the Spirit intercedes with "groans too deep for words." This is not a prayer that can be articulated with language. It is the Spirit of God Himself crying out to the Father on your behalf, translating the ache of your heart into a petition that perfectly aligns with God's will. You are never truly without words in prayer — because the Spirit always has the words, even when you don't.
+          </p>
+          <p>
+            And notice what Paul says next in verse 27: <em>"He who searches our hearts knows the mind of the Spirit, because the Spirit intercedes for the saints according to the will of God."</em> The Spirit's prayers are always effective because they are always in alignment with the Father's purposes. When you feel like your prayers are bouncing off the ceiling, the Spirit is working beneath the surface, interceding with perfect knowledge and perfect love.
+          </p>
+
+          <h4 class="font-serif text-lg font-semibold text-text-dark pt-2">Praying in the Spirit</h4>
+          <p>
+            Jude, the brother of Jesus, gives one of the most direct commands about Spirit-led prayer in all of the New Testament. In
+            <NuxtLink to="/bible?book=JUD&chapter=1" class="text-gold font-semibold hover:underline">Jude 1:20-21</NuxtLink>,
+            he writes: <em>"But you, beloved, building yourselves up in your most holy faith and praying in the Holy Spirit, keep yourselves in the love of God."</em>
+          </p>
+          <p>
+            "Praying in the Holy Spirit" is not a mystical technique reserved for the spiritually advanced. It means praying with an awareness of the Spirit's presence, yielding to His direction, and allowing Him to shape both what you pray and how you pray. It means approaching God not through your own strength or eloquence, but through the power and leading of the Spirit who lives within you. Sometimes praying in the Spirit looks like bold intercession. Other times it looks like wordless tears. Both are valid. Both are heard.
+          </p>
+          <p>
+            Notice that Jude connects Spirit-led prayer directly to <em>keeping yourself in God's love</em>. This is not about earning God's love — that is already secured by the cross. It's about <em>staying conscious</em> of God's love, dwelling in it, and not drifting away. Prayer in the Spirit is the mechanism by which we remain rooted, grounded, and alive to the love that surrounds us.
+          </p>
+
+          <h4 class="font-serif text-lg font-semibold text-text-dark pt-2">You Are Not Alone in Prayer</h4>
+          <p>
+            Jesus promised His disciples that the Father would give the Holy Spirit to those who ask
+            (<NuxtLink to="/bible?book=MAT&chapter=7" class="text-gold font-semibold hover:underline">Matthew 7:11</NuxtLink>).
+            This is an astonishing promise. The same Spirit who hovered over the waters at creation, who empowered the prophets, who raised Jesus from the dead — that Spirit lives in you. And He is not a passive tenant. He is actively interceding, guiding, convicting, comforting, and empowering you every single day.
+          </p>
+          <p>
+            In
+            <NuxtLink to="/bible?book=ROM&chapter=8" class="text-gold font-semibold hover:underline">Romans 8:15-16</NuxtLink>,
+            Paul reveals something deeply intimate: the Spirit causes us to cry out "Abba, Father" — the tender, familial name for God. The Spirit doesn't just help you pray <em>better</em>; He changes the very nature of your relationship with God. Through the Spirit, prayer is no longer a religious obligation. It becomes a conversation between a child and a loving Father.
+          </p>
+          <p>
+            So what does a Spirit-driven prayer life look like practically? It starts with invitation. Before you open your mouth, invite the Spirit to lead. Say, <em>"Holy Spirit, I don't know what to pray. Would you guide me?"</em> Then be still. Listen. Pay attention to what rises in your heart — a person's name, a Scripture, a sense of peace or urgency. The Spirit often speaks not in audible words, but in gentle impressions that grow louder as you learn to listen.
+          </p>
+          <p>
+            Don't be afraid of silence in prayer. Don't rush to fill every moment with words. Some of the deepest prayer happens in the quiet, when the Spirit is interceding with groanings that go beyond language. Your job is not to perform. Your job is to show up, to be present, and to trust that the Spirit is doing His work — even when you can't feel it.
           </p>
         </div>
       </template>
@@ -66,7 +151,7 @@
       <!-- Prayer Tab -->
       <template v-else>
         <p class="text-xs font-semibold tracking-widest text-gold uppercase mb-2">Guided Prayer</p>
-        <h3 class="font-serif text-xl font-bold text-text-dark mb-6">Let's Pray Together</h3>
+        <h3 class="font-serif text-xl font-bold text-text-dark mb-6">Praying with the Spirit</h3>
         <div class="space-y-4">
           <div v-for="(prayer, i) in prayers" :key="i" class="bg-cream rounded-xl p-5">
             <div class="flex items-start gap-3">
@@ -76,6 +161,14 @@
                 <p class="text-sm text-text-muted italic">{{ prayer.text }}</p>
               </div>
             </div>
+          </div>
+
+          <div class="bg-gold/5 border border-gold/20 rounded-xl p-5 mt-6">
+            <p class="font-semibold text-text-dark text-sm mb-2">A Moment of Stillness</p>
+            <p class="text-sm text-text-muted">
+              Take 60 seconds of silence. Don't try to say anything. Simply invite the Holy Spirit to pray through you. Trust that He is interceding even now, with groanings deeper than words
+              (<NuxtLink to="/bible?book=ROM&chapter=8" class="text-gold font-semibold hover:underline">Romans 8:26</NuxtLink>).
+            </p>
           </div>
         </div>
       </template>
@@ -119,9 +212,9 @@
 import { Clock, Volume2 } from 'lucide-vue-next'
 
 const tabs = [
-  { id: 'scripture', label: 'Scripture', time: '2-3 min' },
-  { id: 'devotion', label: 'Devotion', time: '4-6 min' },
-  { id: 'prayer', label: 'Prayer', time: '4-6 min' },
+  { id: 'scripture', label: 'Scripture', time: '3-4 min' },
+  { id: 'devotion', label: 'Devotion', time: '6-8 min' },
+  { id: 'prayer', label: 'Prayer', time: '4-5 min' },
 ]
 
 const activeTab = ref('scripture')
@@ -132,9 +225,11 @@ const overallProgress = computed(() => {
 })
 
 const prayers = [
-  { title: 'Gratitude', text: 'Lord, thank You for this new day and for the breath in my lungs. Help me to see Your blessings in every moment...' },
-  { title: 'Surrender', text: 'Father, I lay down my anxieties and worries before You. I trust that Your plans for me are good...' },
-  { title: 'Guidance', text: 'Holy Spirit, lead me today in every decision and conversation. Help me to be a light to those around me...' },
+  { title: 'Invitation', text: 'Holy Spirit, I invite You into this time of prayer. I confess that I often try to pray in my own strength and my own words. Today I yield to You. Lead me, guide me, pray through me...' },
+  { title: 'Surrender', text: 'Father, I don\'t always know what to pray. I bring You the burdens on my heart — the ones I can name and the ones I can\'t. I trust that Your Spirit is interceding for me right now, with groanings too deep for words...' },
+  { title: 'Identity', text: 'Abba, Father — thank You that through Your Spirit I can call You by that name. I am not a slave to fear. I am Your child. Let that truth sink deep into my heart today. Let it change how I see myself and how I walk through this day...' },
+  { title: 'Guidance', text: 'Holy Spirit, open my ears to hear Your voice today. In every conversation, every decision, every quiet moment — help me to recognize Your leading. Give me the courage to follow where You guide, even when the path is unclear...' },
+  { title: 'Commission', text: 'Lord, as I step into this day, let Your Spirit speak through me as You promised. May the words I say and the love I show be evidence not of my own goodness, but of Your Spirit alive and at work within me. Amen.' },
 ]
 
 function prevTab() {
