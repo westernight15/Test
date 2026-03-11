@@ -1,10 +1,8 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   const { user, fetchUser } = useAuth()
 
-  // Fetch user session if not yet checked
-  if (user.value === undefined) {
-    await fetchUser()
-  }
+  // Fetch user session (useAuth handles skipping when already loaded)
+  await fetchUser()
 
   const publicPaths = ['/login', '/register']
 
