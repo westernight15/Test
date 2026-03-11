@@ -11,7 +11,8 @@ export function useAuth() {
   const isLoggedIn = computed(() => !!user.value)
 
   async function fetchUser() {
-    if (user.value !== undefined) return
+    if (import.meta.server && user.value !== undefined) return
+    if (import.meta.client && user.value !== undefined && user.value !== null) return
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
       user.value = await $fetch<AuthUser>('/api/auth/me', { headers })

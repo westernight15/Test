@@ -39,10 +39,10 @@ export default defineEventHandler(async (event) => {
 
   setCookie(event, 'auth-token', token, {
     httpOnly: true,
-    secure: true,
+    secure: !import.meta.dev,
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 72, // 72 hours
+    maxAge: 60 * 60 * 24, // 24 hours
   })
 
   return { id, email: email.toLowerCase().trim(), displayName: displayName.trim() }

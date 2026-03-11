@@ -65,7 +65,7 @@ async function getHmacKey(secret: string): Promise<CryptoKey> {
 export async function signJWT(
   payload: Record<string, unknown>,
   secret: string,
-  expiresInHours = 72
+  expiresInHours = 24
 ): Promise<string> {
   const header = { alg: 'HS256', typ: 'JWT' }
   const now = Math.floor(Date.now() / 1000)

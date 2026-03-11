@@ -123,6 +123,36 @@
                 </div>
               </div>
             </div>
+
+            <!-- Previous / Next Navigation -->
+            <div class="mt-8 pt-4 border-t border-gray-100 flex items-center justify-between">
+              <button
+                @click="goToPreviousChapter"
+                :disabled="!hasPrevious"
+                :class="[
+                  'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  hasPrevious
+                    ? 'text-gold hover:bg-gold/10'
+                    : 'text-gray-300 cursor-not-allowed'
+                ]"
+              >
+                <ChevronLeft class="w-4 h-4" />
+                <span>{{ previousLabel }}</span>
+              </button>
+              <button
+                @click="goToNextChapter"
+                :disabled="!hasNext"
+                :class="[
+                  'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  hasNext
+                    ? 'text-gold hover:bg-gold/10'
+                    : 'text-gray-300 cursor-not-allowed'
+                ]"
+              >
+                <span>{{ nextLabel }}</span>
+                <ChevronRight class="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </template>
         <template v-else>
@@ -197,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { BookOpen, ChevronRight, Highlighter, StickyNote, X } from 'lucide-vue-next'
+import { BookOpen, ChevronLeft, ChevronRight, Highlighter, StickyNote, X } from 'lucide-vue-next'
 
 interface Translation {
   id: string
@@ -249,6 +279,78 @@ const filteredBooks = computed(() =>
     b.commonName.toLowerCase().includes(search.value.toLowerCase())
   )
 )
+
+const currentBookIndex = computed(() => {
+  if (!selectedBook.value || !books.value) return -1
+  return books.value.findIndex(b => b.id === selectedBook.value!.id)
+})
+
+const hasPrevious = computed(() => {
+  if (!selectedBook.value || !selectedChapter.value) return false
+  if (currentBookIndex.value > 0) return true
+  return selectedChapter.value > 1
+})
+
+const hasNext = computed(() => {
+  if (!selectedBook.value || !selectedChapter.value || !books.value) return false
+  if (currentBookIndex.value < books.value.length - 1) return true
+  return selectedChapter.value < selectedBook.value.numberOfChapters
+})
+
+const previousLabel = computed(() => {
+  if (!selectedBook.value || !selectedChapter.value || !books.value) return ''
+  if (selectedChapter.value > 1) {
+    return `${selectedBook.value.commonName} ${selectedChapter.value - 1}`
+  }
+  const prevBook = books.value[currentBookIndex.value - 1]
+  if (prevBook) return `${prevBook.commonName} ${prevBook.numberOfChapters}`
+  return ''
+})
+
+const nextLabel = computed(() => {
+  if (!selectedBook.value || !selectedChapter.value || !books.value) return ''
+  if (selectedChapter.value < selectedBook.value.numberOfChapters) {
+    return `${selectedBook.value.commonName} ${selectedChapter.value + 1}`
+  }
+  const nextBook = books.value[currentBookIndex.value + 1]
+  if (nextBook) return `${nextBook.commonName} 1`
+  return ''
+})
+
+function goToPreviousChapter() {
+  if (!hasPrevious.value || !selectedBook.value || !selectedChapter.value || !books.value) return
+  if (selectedChapter.value > 1) {
+    selectChapter(selectedChapter.value - 1)
+  } else {
+    const prevBook = books.value[currentBookIndex.value - 1]
+    if (prevBook) {
+      selectedBook.value = prevBook
+      selectChapter(prevBook.numberOfChapters)
+    }
+  }
+  scrollToTop()
+}
+
+function goToNextChapter() {
+  if (!hasNext.value || !selectedBook.value || !selectedChapter.value || !books.value) return
+  if (selectedChapter.value < selectedBook.value.numberOfChapters) {
+    selectChapter(selectedChapter.value + 1)
+  } else {
+    const nextBook = books.value[currentBookIndex.value + 1]
+    if (nextBook) {
+      selectedBook.value = nextBook
+      selectChapter(1)
+    }
+  }
+  scrollToTop()
+}
+
+function scrollToTop() {
+  nextTick(() => {
+    document.querySelector('.flex-1.bg-white')?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+}
 
 async function onTranslationChange() {
   selectedBook.value = null
