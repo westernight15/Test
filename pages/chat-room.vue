@@ -62,6 +62,9 @@
       </div>
     </div>
 
+    <!-- Error -->
+    <p v-if="sendError" class="text-red-500 text-xs mb-2 px-1">{{ sendError }}</p>
+
     <!-- Input -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 flex items-center gap-3">
       <input
@@ -113,6 +116,7 @@ const messages = ref<ChatMessage[]>([])
 const newMessage = ref('')
 const loading = ref(false)
 const sending = ref(false)
+const sendError = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
 
 const currentRoomLabel = computed(() => rooms.find(r => r.id === activeRoom.value)?.label || '')
@@ -163,12 +167,14 @@ async function fetchMessages() {
 
 function switchRoom(roomId: string) {
   activeRoom.value = roomId
+  newMessage.value = ''
   fetchMessages()
 }
 
 async function sendMessage() {
   if (!newMessage.value.trim() || sending.value) return
   sending.value = true
+  sendError.value = ''
   try {
     const msg = await $fetch<ChatMessage>('/api/chat/messages', {
       method: 'POST',
@@ -177,6 +183,8 @@ async function sendMessage() {
     messages.value.push(msg)
     newMessage.value = ''
     scrollToBottom()
+  } catch (e: any) {
+    sendError.value = e?.data?.message || 'Failed to send message. Please try again.'
   } finally {
     sending.value = false
   }
