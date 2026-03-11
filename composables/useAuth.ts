@@ -11,11 +11,26 @@ export function useAuth() {
   const isLoggedIn = computed(() => !!user.value)
 
   async function fetchUser() {
-    if (import.meta.server && user.value !== undefined) return
-    if (import.meta.client && user.value !== undefined && user.value !== null) return
+    if (import.meta.server) {
+      if (user.value !== undefined) return
+      // Read directly from SSR event context (set by server middleware)
+      try {
+        const event = useRequestEvent()
+        const ctx = event?.context?.user
+        if (ctx) {
+          user.value = { id: ctx.id, email: ctx.email, displayName: ctx.displayName }
+        } else {
+          user.value = null
+        }
+      } catch {
+        user.value = null
+      }
+      return
+    }
+    // Client: retry if SSR returned null (cookie not forwarded during SSR)
+    if (user.value !== undefined && user.value !== null) return
     try {
-      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-      user.value = await $fetch<AuthUser>('/api/auth/me', { headers })
+      user.value = await $fetch<AuthUser>('/api/auth/me')
     } catch {
       user.value = null
     }
