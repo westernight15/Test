@@ -189,20 +189,37 @@
         Previous
       </button>
       <div class="flex items-center gap-2">
-        <button
-          v-if="!isSpeaking && !isPaused"
-          @click="startListening"
-          class="bg-gold hover:bg-gold-dark text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2"
+        <!-- Voice selector -->
+        <select
+          v-if="!isPlaying && !isPaused"
+          v-model="voiceProvider"
+          class="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-gold bg-white"
         >
-          <Volume2 class="w-4 h-4" />
-          Listen
+          <option value="browser">Browser Voice</option>
+          <option value="openai">OpenAI (HD)</option>
+          <option value="elevenlabs">ElevenLabs</option>
+        </select>
+        <button
+          v-if="!isPlaying && !isPaused"
+          @click="startListening"
+          :disabled="isLoading"
+          :class="[
+            'px-6 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2',
+            isLoading
+              ? 'bg-gray-300 text-gray-500 cursor-wait'
+              : 'bg-gold hover:bg-gold-dark text-white'
+          ]"
+        >
+          <Loader2 v-if="isLoading" class="w-4 h-4 animate-spin" />
+          <Volume2 v-else class="w-4 h-4" />
+          {{ isLoading ? 'Generating...' : 'Listen' }}
         </button>
-        <template v-else>
+        <template v-if="isPlaying || isPaused">
           <button
             @click="togglePause"
             class="bg-gold hover:bg-gold-dark text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2"
           >
-            <Pause v-if="isSpeaking && !isPaused" class="w-4 h-4" />
+            <Pause v-if="isPlaying && !isPaused" class="w-4 h-4" />
             <Play v-else class="w-4 h-4" />
             {{ isPaused ? 'Resume' : 'Pause' }}
           </button>
@@ -232,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-import { Clock, Volume2, VolumeX, Pause, Play } from 'lucide-vue-next'
+import { Clock, Volume2, VolumeX, Pause, Play, Loader2 } from 'lucide-vue-next'
 
 const tabs = [
   { id: 'scripture', label: 'Scripture', time: '3-4 min' },
@@ -255,9 +272,14 @@ const prayers = [
   { title: 'Commission', text: 'Lord, as I step into this day, let Your Spirit speak through me as You promised. May the words I say and the love I show be evidence not of my own goodness, but of Your Spirit alive and at work within me. Amen.' },
 ]
 
-// --- Speech Synthesis ---
-const isSpeaking = ref(false)
+// --- Audio Playback ---
+const voiceProvider = ref('browser')
+const isPlaying = ref(false)
 const isPaused = ref(false)
+const isLoading = ref(false)
+const audioEl = ref<HTMLAudioElement | null>(null)
+// Browser speech state (separate from audio element)
+const isBrowserSpeaking = ref(false)
 
 const scriptureText = `Today's Scripture: A Spirit-Driven Walk. Readings from Matthew, Jude, and Romans.
 
@@ -322,59 +344,116 @@ const tabTextMap: Record<string, () => string> = {
   prayer: () => prayerText.value,
 }
 
-function startListening() {
+async function startListening() {
+  const text = tabTextMap[activeTab.value]?.() || ''
+  if (!text) return
+
+  stopListening()
+
+  if (voiceProvider.value === 'browser') {
+    startBrowserSpeech(text)
+    return
+  }
+
+  // OpenAI or ElevenLabs — call server API
+  isLoading.value = true
+  try {
+    const result = await $fetch<{ audio: string; mimeType: string }>('/api/tts/generate', {
+      method: 'POST',
+      body: { text, provider: voiceProvider.value }
+    })
+
+    const audioSrc = `data:${result.mimeType};base64,${result.audio}`
+    const audio = new Audio(audioSrc)
+    audioEl.value = audio
+
+    audio.onplay = () => { isPlaying.value = true; isPaused.value = false }
+    audio.onpause = () => { isPaused.value = true }
+    audio.onended = () => { isPlaying.value = false; isPaused.value = false; audioEl.value = null }
+    audio.onerror = () => { isPlaying.value = false; isPaused.value = false; audioEl.value = null }
+
+    await audio.play()
+  } catch (e: any) {
+    const msg = e?.data?.message || 'Failed to generate audio. Check that the API key is configured.'
+    alert(msg)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function startBrowserSpeech(text: string) {
   if (!window.speechSynthesis) return
   window.speechSynthesis.cancel()
 
-  const text = tabTextMap[activeTab.value]?.() || ''
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.rate = 0.95
   utterance.pitch = 1
 
-  // Prefer a natural-sounding English voice
   const voices = window.speechSynthesis.getVoices()
-  const preferred = voices.find(v => v.name.includes('Samantha')) // macOS
+  const preferred = voices.find(v => v.name.includes('Samantha'))
     || voices.find(v => v.name.includes('Google US English'))
     || voices.find(v => v.lang.startsWith('en') && v.localService)
     || voices.find(v => v.lang.startsWith('en'))
   if (preferred) utterance.voice = preferred
 
-  utterance.onend = () => {
-    isSpeaking.value = false
-    isPaused.value = false
-  }
-  utterance.onerror = () => {
-    isSpeaking.value = false
-    isPaused.value = false
-  }
+  utterance.onend = () => { isPlaying.value = false; isPaused.value = false; isBrowserSpeaking.value = false }
+  utterance.onerror = () => { isPlaying.value = false; isPaused.value = false; isBrowserSpeaking.value = false }
 
   window.speechSynthesis.speak(utterance)
-  isSpeaking.value = true
+  isPlaying.value = true
   isPaused.value = false
+  isBrowserSpeaking.value = true
 }
 
 function togglePause() {
-  if (!window.speechSynthesis) return
-  if (isPaused.value) {
-    window.speechSynthesis.resume()
-    isPaused.value = false
-  } else {
-    window.speechSynthesis.pause()
-    isPaused.value = true
+  if (isBrowserSpeaking.value) {
+    if (isPaused.value) {
+      window.speechSynthesis.resume()
+      isPaused.value = false
+    } else {
+      window.speechSynthesis.pause()
+      isPaused.value = true
+    }
+    return
+  }
+
+  if (audioEl.value) {
+    if (isPaused.value) {
+      audioEl.value.play()
+    } else {
+      audioEl.value.pause()
+    }
   }
 }
 
 function stopListening() {
-  if (!window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  isSpeaking.value = false
+  // Stop browser speech
+  if (isBrowserSpeaking.value) {
+    window.speechSynthesis?.cancel()
+    isBrowserSpeaking.value = false
+  }
+
+  // Stop audio element
+  if (audioEl.value) {
+    audioEl.value.pause()
+    audioEl.value.currentTime = 0
+    audioEl.value = null
+  }
+
+  isPlaying.value = false
   isPaused.value = false
 }
 
-// Stop speech when switching tabs or leaving page
+// Stop playback when switching tabs or leaving page
 watch(activeTab, () => stopListening())
 onUnmounted(() => {
-  if (import.meta.client) window.speechSynthesis?.cancel()
+  if (import.meta.client) {
+    window.speechSynthesis?.cancel()
+    if (audioEl.value) {
+      audioEl.value.pause()
+      audioEl.value = null
+    }
+  }
 })
 
 function prevTab() {
